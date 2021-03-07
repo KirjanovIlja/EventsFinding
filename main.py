@@ -1,23 +1,48 @@
 import requests
-import re
 from bs4 import BeautifulSoup
 from Concert import Concert
+from connect import db, concerts
+
+
 
 URL = 'https://concertful.com/area/poland/'
-
 page = requests.get(URL)
 soup = BeautifulSoup(page.content, 'html.parser')
-infos = []
-bands = []
-abbrs = []
 
-for i in soup.findAll('div', {'class':'einfo'}):
-    infos.append(i)
-    bands.append(i.span.a.string)
-    #band = i.abbr.find_all('abbr')[0]['content']
-    #link = i.abbr.find_all('abbr')[1]['content']
+concerts_arr = []
+
+for i in soup.findAll('div', {'class':'event_row'}):
+
+    edate = i.find('div', {'class':'edate'})
+    edate_meta = edate.find_all('meta')
     
-    print(i.find_all('<span class="elocation">'))
-    #print(band, link)
+    start_date = edate_meta[0]['content']
+    end_date = edate_meta[1]['content']
+    einfo = i.find('div', {'class':'einfo'})
+    einfo_name = einfo.find_all('abbr')
 
-print(infos[0].prettify())
+    name = einfo_name[0].find_all('abbr')[0]['content']
+    
+    einfo_location = einfo.find_all('span')
+
+    place = einfo_location[1].find_all('span')[1].string
+    city = einfo_location[1].find_all('abbr')[1].string
+    country = einfo_location[1].find_all('abbr')[2]['content']
+    genre = einfo.find_all('span')[-1].string
+
+    image = i.find_all('meta')[-1]['content']
+    concert = Concert(name, start_date, end_date, city, country, place, genre, image)
+    concerts_arr.append(concert.toObj())
+
+for concert in concerts_arr:
+    concerts.update_one(
+        {
+            'band':concert['band'],
+            'start date':concert['start date'],
+            'place':concert['place']
+        },
+        {
+            '$set': concert
+        },
+        True
+    ) 
