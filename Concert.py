@@ -17,7 +17,7 @@ class Concert :
             "band": self.band,
             "genre":self.genre,
             "start date": self.start_date,
-            "end_date": self.end_date,
+            "end date": self.end_date,
             "city":self.city,
             "place":self.place,
             "country": self.country,
